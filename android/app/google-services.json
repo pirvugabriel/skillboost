@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "252961405039",
+    "project_id": "skillboost-d2b56",
+    "storage_bucket": "skillboost-d2b56.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:252961405039:android:09524dd7b977d0998f359a",
+        "android_client_info": {
+          "package_name": "com.example.skillboost"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDZf00rh9K7OLTSjPxbJMfquzMLYfwCBsk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
