@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:skillboost/screens/signup_screen.dart';
 import 'package:skillboost/screens/home_screen.dart';
 import 'package:skillboost/screens/login_screen.dart';
 import 'package:skillboost/screens/catalog_screen.dart';
@@ -26,9 +27,10 @@ class SkillBoostApp extends StatelessWidget {
         ),
         fontFamily: 'Roboto',
       ),
-      initialRoute: '/',
+      initialRoute: '/signup',
       routes: {
-        '/': (context) => LoginScreen(),
+        '/signup': (context) => SignupScreen(),
+        '/login': (context) => LoginScreen(),
         '/home': (context) => HomeScreen(),
         '/catalog': (context) => CatalogScreen(),
       },
