@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -11,41 +12,69 @@ class SignupScreen extends StatefulWidget {
 class SignupScreenState extends State<SignupScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+
   bool _isPasswordVisible = false;
   bool _isChecked = false;
 
-  void _createAccount() {
-    final email = _emailController.text.trim();
-
-    // Validare: Verificăm dacă checkbox-ul este bifat
-    if (!_isChecked) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Please agree to the Terms & Conditions.'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-    // Validare: Verificăm dacă email-ul conține @yahoo sau @gmail
-    if (!email.contains('@yahoo') && !email.contains('@gmail')) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Please use a valid email ending with @yahoo or @gmail.'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-    // Dacă toate validările sunt trecute, afișăm succes
+  void _showSnackBar(String message, Color color, IconData icon) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Account created successfully!'),
-        backgroundColor: Colors.green,
+        content: Row(
+          children: [
+            Icon(icon, color: Colors.white),
+            const SizedBox(width: 10),
+            Expanded(child: Text(message)),
+          ],
+        ),
+        backgroundColor: color,
       ),
     );
+  }
+
+  void _createAccount() async{
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+    final confirmPassword = _confirmPasswordController.text.trim();
+
+    // Validare: Checkbox-ul trebuie să fie bifat
+    if (!_isChecked) {
+      _showSnackBar('Please agree to the Terms & Conditions.', Colors.red, Icons.warning);
+      return;
+    }
+
+    // Validare: Parolele trebuie să coincidă
+    if (password != confirmPassword) {
+      _showSnackBar('Passwords do not match!', Colors.red, Icons.lock);
+      return;
+    }
+
+
+    try {
+      // Apel Firebase pentru creare cont
+      await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
+      // Succes: cont creat
+      _showSnackBar('Account created successfully!', Colors.green, Icons.check_circle);
+
+      // Redirecționează către pagina Home
+      Navigator.pushNamed(context, '/home');
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+      // Gestionare erori Firebase
+      if (e.code == 'email-already-in-use') {
+        _showSnackBar('This email is already in use.', Colors.red, Icons.email);
+      } else if (e.code == 'invalid-email') {
+        _showSnackBar('The email format is invalid.', Colors.red, Icons.email);
+      } else if (e.code == 'weak-password') {
+        _showSnackBar('The password is too weak.', Colors.red, Icons.lock);
+      } else {
+        _showSnackBar('An error occurred. Please try again.', Colors.red, Icons.error);
+      }
+    }
   }
 
   @override
@@ -113,6 +142,19 @@ class SignupScreenState extends State<SignupScreen> {
                     });
                   },
                 ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _confirmPasswordController,
+              obscureText: !_isPasswordVisible,
+              decoration: InputDecoration(
+                labelText: 'Confirm Password',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                filled: true,
+                fillColor: Colors.white,
               ),
             ),
             const SizedBox(height: 32),

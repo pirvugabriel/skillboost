@@ -12,7 +12,20 @@
           "package_name": "com.example.skillboost"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "252961405039-0gpkk81226j02m2d1q736cj476hgv7bn.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.skillboost",
+            "certificate_hash": "fd3d25d2d86d180ecaea2c54977c12406d4b5bca"
+          }
+        },
+        {
+          "client_id": "252961405039-lt3vdcsqtdlqcqes00333333tmh61n8f.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDZf00rh9K7OLTSjPxbJMfquzMLYfwCBsk"
@@ -20,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "252961405039-lt3vdcsqtdlqcqes00333333tmh61n8f.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "252961405039-nbn5je6jmnv6p1kptn5bu5cvt9nh3ibo.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.skillboost"
+              }
+            }
+          ]
         }
       }
     }
