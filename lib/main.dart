@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
+
 import 'package:skillboost/screens/signup_screen.dart';
 import 'package:skillboost/screens/home_screen.dart';
 import 'package:skillboost/screens/login_screen.dart';
@@ -13,6 +18,8 @@ void main() async {
 
 class SkillBoostApp extends StatelessWidget {
   const SkillBoostApp({super.key});
+  static FirebaseAnalytics analytics = FirebaseAnalytics.instance;
+  static FirebaseAnalyticsObserver observer = FirebaseAnalyticsObserver(analytics: analytics);
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -27,6 +34,7 @@ class SkillBoostApp extends StatelessWidget {
         ),
         fontFamily: 'Roboto',
       ),
+      navigatorObservers: [observer], // Adăugat pentru Firebase Analytics
       initialRoute: '/signup',
       routes: {
         '/signup': (context) => SignupScreen(),
