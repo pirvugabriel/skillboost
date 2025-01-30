@@ -9,6 +9,9 @@ import 'package:skillboost/screens/signup_screen.dart';
 import 'package:skillboost/screens/home_screen.dart';
 import 'package:skillboost/screens/login_screen.dart';
 import 'package:skillboost/screens/catalog_screen.dart';
+import 'package:skillboost/screens/search_screen.dart';
+import 'package:skillboost/screens/messages_screen.dart';
+import 'package:skillboost/screens/account_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -41,6 +44,9 @@ class SkillBoostApp extends StatelessWidget {
         '/login': (context) => LoginScreen(),
         '/home': (context) => HomeScreen(),
         '/catalog': (context) => CatalogScreen(),
+        '/search': (context) => SearchScreen(),
+        '/messages': (context) => MessagesScreen(),
+        '/account': (context) => AccountScreen(),
       },
     );
   }
