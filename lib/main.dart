@@ -12,7 +12,7 @@ import 'package:skillboost/screens/catalog_screen.dart';
 import 'package:skillboost/screens/search_screen.dart';
 import 'package:skillboost/screens/messages_screen.dart';
 import 'package:skillboost/screens/account_screen.dart';
-
+import 'package:skillboost/screens/course_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(); // Inițializează Firebase
@@ -47,6 +47,7 @@ class SkillBoostApp extends StatelessWidget {
         '/search': (context) => SearchScreen(),
         '/messages': (context) => MessagesScreen(),
         '/account': (context) => AccountScreen(),
+        '/course': (context) => CourseScreen()
       },
     );
   }
