@@ -8,11 +8,23 @@ class LoginScreen extends StatefulWidget {
   @override
   LoginScreenState createState() => LoginScreenState();
 }
+class LifecycleEventHandler extends WidgetsBindingObserver {
+  final Future<void> Function() detachedCallBack;
 
+  LifecycleEventHandler({required this.detachedCallBack});
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.detached) {
+      detachedCallBack();
+    }
+  }
+}
 class LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isPasswordVisible = false;
+  bool _keepMeSignedIn = false;
 
   void _showSnackBar(String message, Color color, IconData icon) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -46,6 +58,16 @@ class LoginScreenState extends State<LoginScreen> {
       _showSnackBar('Login successful!', Colors.green, Icons.check);
       // Navigați la pagina principală
       Navigator.pushReplacementNamed(context, '/home');
+      if (!_keepMeSignedIn) {
+        // Ascultă evenimentul de închidere a aplicației
+        WidgetsBinding.instance.addObserver(
+          LifecycleEventHandler(
+            detachedCallBack: () async {
+              await FirebaseAuth.instance.signOut();
+            },
+          ),
+        );
+      }
     } catch (e) {
       _showSnackBar('Login failed: ${e.toString()}', Colors.red, Icons.error);
     }
@@ -117,6 +139,19 @@ class LoginScreenState extends State<LoginScreen> {
                   },
                 ),
               ),
+            ),
+            const SizedBox(height: 16),
+
+            // Checkbox "Keep me signed in"
+            CheckboxListTile(
+              title: const Text("Keep me signed in"),
+              value: _keepMeSignedIn,
+              onChanged: (newValue) {
+                setState(() {
+                  _keepMeSignedIn = newValue!;
+                });
+              },
+              controlAffinity: ListTileControlAffinity.leading,
             ),
             const SizedBox(height: 16),
 

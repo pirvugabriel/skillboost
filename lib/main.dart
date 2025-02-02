@@ -5,14 +5,14 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 
-import 'package:skillboost/screens/signup_screen.dart';
-import 'package:skillboost/screens/home_screen.dart';
-import 'package:skillboost/screens/login_screen.dart';
-import 'package:skillboost/screens/catalog_screen.dart';
-import 'package:skillboost/screens/search_screen.dart';
-import 'package:skillboost/screens/messages_screen.dart';
-import 'package:skillboost/screens/account_screen.dart';
-import 'package:skillboost/screens/course_screen.dart';
+import 'package:skillboost/screens/sign/signup_screen.dart';
+import 'package:skillboost/screens/home/home_screen.dart';
+import 'package:skillboost/screens/sign/login_screen.dart';
+import 'package:skillboost/screens/catalog/catalog_screen.dart';
+import 'package:skillboost/screens/search/search_screen.dart';
+import 'package:skillboost/screens/messages/messages_screen.dart';
+import 'package:skillboost/screens/account/account_screen.dart';
+import 'package:skillboost/screens/catalog/course_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(); // Inițializează Firebase
@@ -37,8 +37,7 @@ class SkillBoostApp extends StatelessWidget {
         ),
         fontFamily: 'Roboto',
       ),
-      navigatorObservers: [observer], // Adăugat pentru Firebase Analytics
-      initialRoute: '/signup',
+      initialRoute: '/',
       routes: {
         '/signup': (context) => SignupScreen(),
         '/login': (context) => LoginScreen(),
@@ -47,7 +46,34 @@ class SkillBoostApp extends StatelessWidget {
         '/search': (context) => SearchScreen(),
         '/messages': (context) => MessagesScreen(),
         '/account': (context) => AccountScreen(),
-        '/course': (context) => CourseScreen()
+        '/course': (context) => CourseScreen(),
+      },
+      home: AuthenticationWrapper(),
+    );
+  }
+}
+
+class AuthenticationWrapper extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.authStateChanges(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.active) {
+          User? user = snapshot.data;
+          if (user == null) {
+            return LoginScreen();
+          } else {
+            return HomeScreen();
+          }
+        } else {
+          // Ecran de încărcare
+          return Scaffold(
+            body: Center(
+              child: CircularProgressIndicator(),
+            ),
+          );
+        }
       },
     );
   }

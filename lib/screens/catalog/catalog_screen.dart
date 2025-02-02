@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:skillboost/screens/course_screen.dart';
+import 'package:skillboost/screens/catalog/course_screen.dart';
 
 class CatalogScreen extends StatelessWidget {
   const CatalogScreen({super.key});
