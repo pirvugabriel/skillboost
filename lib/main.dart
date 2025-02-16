@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:video_player/video_player.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
@@ -96,60 +95,6 @@ class AuthenticationWrapper extends StatelessWidget {
           return const Scaffold(
             body: Center(child: CircularProgressIndicator()),
           );
-        }
-      },
-    );
-  }
-}
-
-/// Funcție globală pentru a crea un widget de redare video.
-/// [videoPath] poate fi un URL de rețea sau calea către un fișier local.
-Widget buildVideoPlayer(String videoPath) {
-  return VideoPlayerWidget(videoPath: videoPath);
-}
-
-/// Widget personalizat pentru redarea videoclipurilor.
-class VideoPlayerWidget extends StatefulWidget {
-  final String videoPath;
-
-  const VideoPlayerWidget({super.key, required this.videoPath});
-  @override
-  VideoPlayerWidgetState createState() => VideoPlayerWidgetState();
-}
-
-class VideoPlayerWidgetState extends State<VideoPlayerWidget> {
-  late VideoPlayerController _controller;
-  late Future<void> _initializeVideoPlayerFuture;
-
-  @override
-  void initState() {
-    super.initState();
-    if (widget.videoPath.startsWith('http')) {
-      _controller = VideoPlayerController.networkUrl(Uri.parse(widget.videoPath));
-    } else {
-      _controller = VideoPlayerController.asset(widget.videoPath);
-    }
-    _initializeVideoPlayerFuture = _controller.initialize();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return FutureBuilder(
-      future: _initializeVideoPlayerFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.done) {
-          return AspectRatio(
-            aspectRatio: _controller.value.aspectRatio,
-            child: VideoPlayer(_controller),
-          );
-        } else {
-          return const Center(child: CircularProgressIndicator());
         }
       },
     );
