@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -10,89 +11,119 @@ class SignupScreen extends StatefulWidget {
 }
 
 class SignupScreenState extends State<SignupScreen> {
+  final _nicknameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
   bool _isPasswordVisible = false;
+  bool _isConfirmPasswordVisible = false;
   bool _isChecked = false;
 
-  void _showSnackBar(String message, Color color, IconData icon) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            Icon(icon, color: Colors.white),
-            const SizedBox(width: 10),
-            Expanded(child: Text(message)),
+  void _showErrorDialog(String title, String message) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+          title: Row(
+            children: [
+              const Icon(Icons.error, color: Colors.red, size: 28),
+              const SizedBox(width: 10),
+              Text(title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            ],
+          ),
+          content: Text(message, style: const TextStyle(fontSize: 16)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('OK', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            ),
           ],
-        ),
-        backgroundColor: color,
-      ),
+        );
+      },
     );
   }
 
-  void _createAccount() async{
+  void _createAccount() async {
+    final nickname = _nicknameController.text.trim();
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
     final confirmPassword = _confirmPasswordController.text.trim();
 
-    // Validare: Checkbox-ul trebuie să fie bifat
-    if (!_isChecked) {
-      _showSnackBar('Please agree to the Terms & Conditions.', Colors.red, Icons.warning);
+    if (nickname.isEmpty) {
+      _showErrorDialog('Nickname Required', 'Please enter a nickname.');
       return;
     }
 
-    // Validare: Parolele trebuie să coincidă
+    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email)) {
+      _showErrorDialog('Invalid Email', 'Please enter a valid email address.');
+      return;
+    }
+
+    if (password.length < 6) {
+      _showErrorDialog('Weak Password', 'Password must be at least 6 characters long.');
+      return;
+    }
+
     if (password != confirmPassword) {
-      _showSnackBar('Passwords do not match!', Colors.red, Icons.lock);
+      _showErrorDialog('Password Mismatch', 'Passwords do not match!');
       return;
     }
 
+    if (!_isChecked) {
+      _showErrorDialog('Terms & Conditions', 'Please agree to the Terms & Conditions.');
+      return;
+    }
 
     try {
-      // Apel Firebase pentru creare cont
-      await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
 
-      // Succes: cont creat
-      _showSnackBar('Account created successfully!', Colors.green, Icons.check_circle);
+      await FirebaseFirestore.instance.collection('users').doc(userCredential.user!.uid).set({
+        'nickname': nickname,
+        'email': email,
+        'points': 0,
+        'purchased_courses': [],
+      });
 
-      // Redirecționează către pagina Home
+      _showErrorDialog('Success', 'Account created successfully!');
+
+      if (!mounted) return;
       Navigator.pushNamed(context, '/home');
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
-      // Gestionare erori Firebase
       if (e.code == 'email-already-in-use') {
-        _showSnackBar('This email is already in use.', Colors.red, Icons.email);
+        _showErrorDialog('Email Taken', 'This email is already in use.');
       } else if (e.code == 'invalid-email') {
-        _showSnackBar('The email format is invalid.', Colors.red, Icons.email);
+        _showErrorDialog('Invalid Email', 'The email format is invalid.');
       } else if (e.code == 'weak-password') {
-        _showSnackBar('The password is too weak.', Colors.red, Icons.lock);
+        _showErrorDialog('Weak Password', 'The password is too weak.');
       } else {
-        _showSnackBar('An error occurred. Please try again.', Colors.red, Icons.error);
+        _showErrorDialog('Error', 'An error occurred. Please try again.');
       }
+    } catch (e) {
+      _showErrorDialog('Unexpected Error', 'An error occurred: ${e.toString()}');
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF76FFFF), // Turcoaz
+      backgroundColor: const Color(0xFF76FFFF),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 40),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Titlu
             Text(
               'Welcome to SkillBoost',
               style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
-                color: const Color(0xFF29548A), // Albastru închis
+                color: const Color(0xFF29548A),
               ),
             ),
             const SizedBox(height: 8),
@@ -105,37 +136,38 @@ class SignupScreenState extends State<SignupScreen> {
             ),
             const SizedBox(height: 32),
 
-            // Email Field
             TextField(
-              controller: _emailController,
+              controller: _nicknameController,
               decoration: InputDecoration(
-                labelText: 'Your Email',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
+                labelText: 'Nickname',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                 filled: true,
                 fillColor: Colors.white,
               ),
             ),
             const SizedBox(height: 16),
 
-            // Password Field
+            TextField(
+              controller: _emailController,
+              decoration: InputDecoration(
+                labelText: 'Your Email',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                filled: true,
+                fillColor: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 16),
+
             TextField(
               controller: _passwordController,
               obscureText: !_isPasswordVisible,
               decoration: InputDecoration(
                 labelText: 'Password',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                 filled: true,
                 fillColor: Colors.white,
                 suffixIcon: IconButton(
-                  icon: Icon(
-                    _isPasswordVisible
-                        ? Icons.visibility
-                        : Icons.visibility_off,
-                  ),
+                  icon: Icon(_isPasswordVisible ? Icons.visibility : Icons.visibility_off),
                   onPressed: () {
                     setState(() {
                       _isPasswordVisible = !_isPasswordVisible;
@@ -145,38 +177,27 @@ class SignupScreenState extends State<SignupScreen> {
               ),
             ),
             const SizedBox(height: 16),
+
             TextField(
               controller: _confirmPasswordController,
-              obscureText: !_isPasswordVisible,
+              obscureText: !_isConfirmPasswordVisible,
               decoration: InputDecoration(
                 labelText: 'Confirm Password',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                 filled: true,
                 fillColor: Colors.white,
+                suffixIcon: IconButton(
+                  icon: Icon(_isConfirmPasswordVisible ? Icons.visibility : Icons.visibility_off),
+                  onPressed: () {
+                    setState(() {
+                      _isConfirmPasswordVisible = !_isConfirmPasswordVisible;
+                    });
+                  },
+                ),
               ),
             ),
             const SizedBox(height: 32),
 
-            // Create Account Button
-            ElevatedButton(
-              onPressed: _createAccount,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFFF742A), // Portocaliu vibrant
-                minimumSize: const Size(double.infinity, 50),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              child: const Text(
-                'Create account',
-                style: TextStyle(fontSize: 18, color: Colors.white),
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Checkbox and Terms
             Row(
               children: [
                 Checkbox(
@@ -190,40 +211,50 @@ class SignupScreenState extends State<SignupScreen> {
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text(
-                    'By signing up, you agree to our Terms & Conditions.',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[700],
+                  child: RichText(
+                    text: TextSpan(
+                      text: 'By signing up, you agree to our ',
+                      style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                      children: [
+                        TextSpan(
+                          text: 'Terms & Conditions',
+                          style: TextStyle(fontSize: 14, color: const Color(0xFF29548A), fontWeight: FontWeight.bold),
+                          recognizer: TapGestureRecognizer()..onTap = () => Navigator.pushNamed(context, '/terms'),
+                        ),
+                      ],
                     ),
                   ),
                 ),
               ],
             ),
+
             const SizedBox(height: 16),
 
-            // Already have an account?
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _createAccount,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFFF742A),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
+                child: const Text('Create account', style: TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold)),
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
             Center(
               child: RichText(
                 text: TextSpan(
                   text: 'Already have an account? ',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[800],
-                  ),
+                  style: TextStyle(fontSize: 14, color: Colors.grey[700]),
                   children: [
                     TextSpan(
                       text: 'Log in',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: const Color(0xFF29548A),
-                        fontWeight: FontWeight.bold,
-                      ),
-                      // Adaugă acțiune la Log in
-                      recognizer: TapGestureRecognizer()
-                        ..onTap = () {
-                          Navigator.pushNamed(context, '/login');
-                        },
+                      style: TextStyle(fontSize: 14, color: const Color(0xFF29548A), fontWeight: FontWeight.bold),
+                      recognizer: TapGestureRecognizer()..onTap = () => Navigator.pushNamed(context, '/login'),
                     ),
                   ],
                 ),
