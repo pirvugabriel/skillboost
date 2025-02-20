@@ -1,16 +1,13 @@
-# skillboost
+Team: SkillBoost
 
-A new Flutter project.
+High-school: Colegiul National Mircea cel Batran, Ramnicu Valcea
 
-## Getting Started
+Technology: Flutter, Firebase
 
-This project is a starting point for a Flutter application.
+Language: English
 
-A few resources to get you started if this is your first Flutter project:
+Demo: https://youtu.be/cv_ni-yTYLg
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+Pitch: https://youtu.be/3twDUfvvTE8
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+executabil: https://drive.google.com/file/d/1fzgYZtuKczANfd5D5q2mmbBubl1A-WFQ/view?usp=sharing
