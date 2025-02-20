@@ -1,0 +1,2 @@
+C:/Users/pirvu/IdeaProjects/skillboost/android/app/.cxx/Debug/r5b4w6o1/x86/CMakeFiles/edit_cache.dir
+C:/Users/pirvu/IdeaProjects/skillboost/android/app/.cxx/Debug/r5b4w6o1/x86/CMakeFiles/rebuild_cache.dir

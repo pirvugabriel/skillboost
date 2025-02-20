@@ -1,193 +1,210 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-class MessagesScreen extends StatelessWidget {
+class MessagesScreen extends StatefulWidget {
   const MessagesScreen({super.key});
+
+  @override
+  State<MessagesScreen> createState() => _MessagesScreenState();
+}
+
+class _MessagesScreenState extends State<MessagesScreen> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  final String _currentUserId = FirebaseAuth.instance.currentUser?.uid ?? "";
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFF76FFFF),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
         elevation: 0,
-        title: const Text(
-          'Notifications',
-          style: TextStyle(
-            color: Color(0xFF29548A), // Albastru închis
-            fontWeight: FontWeight.bold,
-            fontSize: 24,
-          ),
-        ),
-        centerTitle: true,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        title: Column(
           children: [
-            // Message & Notification tabs
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                GestureDetector(
-                  onTap: () {
-                    // Handle message tab tap
-                  },
-                  child: const Text(
-                    'Message',
-                    style: TextStyle(
-                      color: Color(0xFF29548A),
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      decoration: TextDecoration.underline,
-                    ),
-                  ),
-                ),
-                GestureDetector(
-                  onTap: () {
-                    // Handle notification tab tap
-                  },
-                  child: const Text(
-                    'Notification',
-                    style: TextStyle(
-                      color: Colors.grey,
-                      fontSize: 16,
-                    ),
-                  ),
-                ),
+            // 🔹 Bara de tab-uri
+            TabBar(
+              controller: _tabController,
+              indicatorColor: Colors.blue,
+              labelColor: Colors.black,
+              unselectedLabelColor: Colors.grey,
+              tabs: const [
+                Tab(text: "Message"),
+                Tab(text: "Notification"),
               ],
-            ),
-            const SizedBox(height: 16),
-
-            // Message List
-            Expanded(
-              child: ListView(
-                children: [
-                  _buildMessageCard(
-                    name: 'Bert Pullman',
-                    status: 'Online',
-                    message: 'Congratulations on completing the first lesson, keep up the good work!',
-                    time: '04:32 pm',
-                    online: true,
-                  ),
-                  _buildMessageCard(
-                    name: 'Daniel Lawson',
-                    status: 'Online',
-                    message: 'Your course has been updated, you can check the new course in your study course.',
-                    time: '04:32 pm',
-                    online: true,
-                  ),
-                  _buildMessageCard(
-                    name: 'Nguyen Shane',
-                    status: 'Offline',
-                    message: 'Congratulations, you have completed your course milestone.',
-                    time: '12:00 am',
-                    online: false,
-                  ),
-                ],
-              ),
             ),
           ],
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        selectedItemColor: const Color(0xFFFF742A),
-        unselectedItemColor: Colors.grey,
-        showSelectedLabels: false,
-        showUnselectedLabels: false,
-        onTap: (index) {
-          // Navigate based on index
-        },
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.book), label: 'Course'),
-          BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
-          BottomNavigationBarItem(icon: Icon(Icons.message), label: 'Message'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Account'),
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          _buildMessagesTab(), // 📩 Mesaje
+          _buildNotificationsTab(), // 🔔 Notificări
         ],
       ),
     );
   }
 
-  Widget _buildMessageCard({
-    required String name,
-    required String status,
-    required String message,
-    required String time,
-    required bool online,
-  }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha(25),
-            blurRadius: 5,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          CircleAvatar(
-            backgroundColor: const Color(0xFF76FFFF), // Light Turquoise
-            radius: 24,
-            child: Icon(
-              Icons.person,
-              color: const Color(0xFF29548A), // Dark Blue Icon
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+  /// 📩 **Afișează lista de mesaje**
+  Widget _buildMessagesTab() {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('messages')
+          .where('receiver_id', isEqualTo: _currentUserId) // 🔄 Mesajele primite
+          .orderBy('timestamp', descending: true)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return const Center(child: Text("No messages found", style: TextStyle(fontSize: 16, color: Colors.grey)));
+        }
+
+        final messages = snapshot.data!.docs;
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: messages.length,
+          itemBuilder: (context, index) {
+            final messageData = messages[index].data() as Map<String, dynamic>;
+            return _buildMessageCard(messageData);
+          },
+        );
+      },
+    );
+  }
+
+  /// 🔔 **Afișează lista de notificări**
+  Widget _buildNotificationsTab() {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('notifications')
+          .where('user_id', isEqualTo: _currentUserId) // 🔄 Notificările utilizatorului curent
+          .orderBy('timestamp', descending: true)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return const Center(child: Text("No notifications found", style: TextStyle(fontSize: 16, color: Colors.grey)));
+        }
+
+        final notifications = snapshot.data!.docs;
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: notifications.length,
+          itemBuilder: (context, index) {
+            final notificationData = notifications[index].data() as Map<String, dynamic>;
+            return _buildNotificationCard(notificationData);
+          },
+        );
+      },
+    );
+  }
+
+  /// 📩 **Card pentru fiecare mesaj**
+  Widget _buildMessageCard(Map<String, dynamic> messageData) {
+    return GestureDetector(
+      onTap: () {
+        // 🔹 Navigăm la pagina de chat (pe care o vom crea)
+        Navigator.pushNamed(context, '/chat', arguments: {
+          'receiver_id': messageData['sender_id'],
+          'receiver_name': messageData['sender_name'] ?? "Unknown User",
+        });
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.orange,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 🔹 Nume + Ora
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      name,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF29548A),
-                      ),
-                    ),
-                    Text(
-                      time,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
                 Text(
-                  status,
-                  style: TextStyle(
-                    color: online ? Colors.green : Colors.red,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  messageData['sender_name'] ?? "Unknown User",
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black),
                 ),
-                const SizedBox(height: 8),
                 Text(
-                  message,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.black87,
-                  ),
+                  _formatTimestamp(messageData['timestamp']),
+                  style: const TextStyle(fontSize: 14, color: Colors.black54),
                 ),
               ],
             ),
+            const SizedBox(height: 4),
+            // 🔹 Ultimul mesaj
+            Text(
+              messageData['message'],
+              style: const TextStyle(fontSize: 14, color: Colors.white),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 🔔 **Card pentru fiecare notificare**
+  Widget _buildNotificationCard(Map<String, dynamic> notificationData) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.orange,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 🔹 Titlu notificare + Ora
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  notificationData['title'],
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              Text(
+                _formatTimestamp(notificationData['timestamp']),
+                style: const TextStyle(fontSize: 14, color: Colors.black54),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          // 🔹 Mesajul notificării
+          Text(
+            notificationData['message'],
+            style: const TextStyle(fontSize: 14, color: Colors.white),
           ),
         ],
       ),
     );
+  }
+
+  /// ⏰ **Formatează timestamp-ul**
+  String _formatTimestamp(Timestamp? timestamp) {
+    if (timestamp == null) return "";
+    final dateTime = timestamp.toDate();
+    return "${dateTime.hour}:${dateTime.minute.toString().padLeft(2, '0')} ${dateTime.hour < 12 ? 'AM' : 'PM'}";
   }
 }

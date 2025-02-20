@@ -1,0 +1,1 @@
+C:\Users\pirvu\IdeaProjects\skillboost\build\app\intermediates\cxx\RelWithDebInfo\g2i6d6si\obj\arm64-v8a

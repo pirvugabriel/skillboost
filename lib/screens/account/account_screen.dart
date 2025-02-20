@@ -1,135 +1,119 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:skillboost/screens/account/edit_account_screen.dart';
+import 'package:skillboost/screens/account/creator_screen.dart';
+import 'package:skillboost/screens/account/help_screen.dart';
+import 'package:skillboost/screens/sign/login_screen.dart';
 
-class AccountScreen extends StatelessWidget {
+class AccountScreen extends StatefulWidget {
   const AccountScreen({super.key});
+
+  @override
+  State<AccountScreen> createState() => _AccountScreenState();
+}
+
+class _AccountScreenState extends State<AccountScreen> {
+  String _nickname = "User";
+  String _profileImage = "";
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserData();
+  }
+
+  /// 📌 **Obține datele utilizatorului din Firestore**
+  Future<void> _fetchUserData() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final userDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+    if (userDoc.exists) {
+      setState(() {
+        _nickname = userDoc['nickname'] ?? "User";
+        _profileImage = userDoc['profilePic'] ?? "assets/home/male.png";
+      });
+    }
+  }
+
+  /// 🚪 **Deconectează utilizatorul**
+  Future<void> _logout() async {
+    await FirebaseAuth.instance.signOut();
+    if (mounted) {
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const LoginScreen()));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFF76FFFF),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         title: const Text(
           'Account',
-          style: TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF29548A),
-          ),
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black),
         ),
-        centerTitle: true,
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            CircleAvatar(
-              radius: 50,
-              backgroundColor: const Color(0xFF76FFFF),
-              child: Image.asset(
-                'assets/images/profile_icon.png', // Replace with your profile image
-                fit: BoxFit.cover,
-                width: 70,
-                height: 70,
-              ),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Gabriel Pîrvu',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF29548A),
-              ),
-            ),
-            const SizedBox(height: 32),
-
-            // List of settings
-            Expanded(
-              child: ListView(
+            // 🔹 Imaginea de profil
+            Center(
+              child: Column(
                 children: [
-                  _buildAccountOption(
-                      context, 'Favourite', Icons.favorite_outline),
-                  _buildAccountOption(
-                      context, 'Edit Account', Icons.edit_outlined),
-                  _buildAccountOption(
-                      context, 'Settings and Privacy', Icons.settings_outlined),
-                  _buildAccountOption(context, 'Help', Icons.help_outline),
-                  const Divider(),
-                  _buildLogoutButton(context),
+                  CircleAvatar(
+                    radius: 50,
+                    backgroundImage: _profileImage.startsWith('http')
+                        ? NetworkImage(_profileImage) as ImageProvider
+                        : AssetImage(_profileImage) as ImageProvider,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    _nickname,
+                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black),
+                  ),
                 ],
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // 🔹 Lista de opțiuni
+            _buildOptionItem("Edit Account", Icons.edit, () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const EditAccountScreen()));
+            }),
+            _buildOptionItem("Creator", Icons.upload_file, () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const CreatorScreen()));
+            }),
+            _buildOptionItem("Help", Icons.help_outline, () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const HelpScreen()));
+            }),
+
+            // 🚪 Logout
+            const Spacer(),
+            TextButton(
+              onPressed: _logout,
+              child: const Text(
+                "Logout",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.red),
               ),
             ),
           ],
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        selectedItemColor: const Color(0xFF29548A),
-        unselectedItemColor: Colors.grey,
-        currentIndex: 4,
-        onTap: (index) {
-          switch (index) {
-            case 0:
-              Navigator.pushNamed(context, '/home');
-              break;
-            case 1:
-              Navigator.pushNamed(context, '/catalog');
-              break;
-            case 2:
-              Navigator.pushNamed(context, '/search');
-              break;
-            case 3:
-              Navigator.pushNamed(context, '/messages');
-              break;
-            case 4:
-            // Current screen
-              break;
-          }
-        },
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.book), label: 'Catalog'),
-          BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
-          BottomNavigationBarItem(icon: Icon(Icons.message), label: 'Message'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Account'),
-        ],
-      ),
     );
   }
 
-  Widget _buildAccountOption(BuildContext context, String title, IconData icon) {
+  /// 📌 **Construiește elementele din listă**
+  Widget _buildOptionItem(String title, IconData icon, VoidCallback onTap) {
     return ListTile(
-      leading: Icon(icon, color: Color(0xFF29548A)),
-      title: Text(
-        title,
-        style: const TextStyle(
-          fontSize: 16,
-          color: Color(0xFF29548A),
-        ),
-      ),
-      trailing: const Icon(Icons.arrow_forward_ios, color: Colors.grey),
-      onTap: () {
-        // Navigate to corresponding pages or functions if required
-      },
-    );
-  }
-
-  Widget _buildLogoutButton(BuildContext context) {
-    return ListTile(
-      leading: const Icon(Icons.logout, color: Colors.red),
-      title: const Text(
-        'Logout',
-        style: TextStyle(
-          fontSize: 16,
-          color: Colors.red,
-        ),
-      ),
-      onTap: () async {
-        await FirebaseAuth.instance.signOut();
-        Navigator.pushReplacementNamed(context, '/login');
-      },
+      leading: Icon(icon, color: Colors.black),
+      title: Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500)),
+      trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+      onTap: onTap,
     );
   }
 }

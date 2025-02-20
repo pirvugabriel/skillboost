@@ -1,0 +1,2 @@
+C:/Users/pirvu/IdeaProjects/skillboost/android/app/.cxx/Debug/1m3l4e44/armeabi-v7a/CMakeFiles/edit_cache.dir
+C:/Users/pirvu/IdeaProjects/skillboost/android/app/.cxx/Debug/1m3l4e44/armeabi-v7a/CMakeFiles/rebuild_cache.dir

@@ -12,7 +12,7 @@ import 'package:skillboost/screens/catalog/catalog_screen.dart';
 import 'package:skillboost/screens/search/search_screen.dart';
 import 'package:skillboost/screens/messages/messages_screen.dart';
 import 'package:skillboost/screens/account/account_screen.dart';
-import 'package:skillboost/screens/catalog/course_screen.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -72,7 +72,6 @@ class SkillBoostApp extends StatelessWidget {
         '/search': (context) => const SearchScreen(),
         '/messages': (context) => const MessagesScreen(),
         '/account': (context) => const AccountScreen(),
-        '/course': (context) => const CourseScreen(),
       },
     );
   }
@@ -108,9 +107,24 @@ class AuthenticationWrapper extends StatelessWidget {
         final User? user = snapshot.data;
 
         if (user != null) {
-          // Mutăm adăugarea utilizatorului aici pentru a nu afecta rebuild-ul
-          Future.microtask(() => _addUserToFirestore(user));
-          return const HomeScreen();
+          return FutureBuilder(
+            future: user.reload(), // 🔄 Forțăm Firebase să verifice user-ul
+            builder: (context, reloadSnapshot) {
+              if (reloadSnapshot.connectionState == ConnectionState.waiting) {
+                return const Scaffold(
+                  body: Center(child: CircularProgressIndicator()),
+                );
+              }
+
+              // După reload, verificăm din nou dacă user-ul există
+              if (FirebaseAuth.instance.currentUser == null) {
+                return const DiscoverScreen();
+              }
+
+              Future.delayed(Duration.zero, () => _addUserToFirestore(user));
+              return const HomeScreen();
+            },
+          );
         } else {
           return const DiscoverScreen();
         }
@@ -118,3 +132,4 @@ class AuthenticationWrapper extends StatelessWidget {
     );
   }
 }
+
